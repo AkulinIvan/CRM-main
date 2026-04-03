@@ -18,12 +18,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 178.21.11.252 >> ~/.ssh/known_hosts
 
-      - name: Install rsync
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rsync
-
-      - name: Sync files to server
+      - name: Deploy with rsync
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
@@ -35,11 +30,11 @@ jobs:
             --exclude 'vendor' \
             ./ root@178.21.11.252:/home/aiv/ADS/CRM-main/
 
-      - name: Verify deployment
+      - name: Set permissions
         run: |
           ssh -i ~/.ssh/deploy_key root@178.21.11.252 << 'EOF'
             cd /home/aiv/ADS/CRM-main
-            echo "=== Files on server ==="
+            echo "=== Files deployed ==="
             ls -la
             echo "=== Total files: $(find . -type f | wc -l) ==="
           EOF
