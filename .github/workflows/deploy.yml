@@ -11,27 +11,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug - Check if secret exists
-        run: |
-          if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
-            echo "SSH_PRIVATE_KEY exists (length: ${#SSH_PRIVATE_KEY})"
-          else
-            echo "❌ SSH_PRIVATE_KEY is empty or not set!"
-          fi
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known hosts
+      - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 178.21.11.252 >> ~/.ssh/known_hosts
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 178.21.11.252
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            echo "✅ Connected!"
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new root@178.21.11.252 "echo '✅ SSH connection successful!'"
+
+      - name: Deploy to server
+        run: |
+          ssh -i ~/.ssh/deploy_key root@178.21.11.252 << 'EOF'
+            echo "=== Connected to server ==="
+            cd /root
+            pwd
+            ls -la
+            echo "=== Deployment completed ==="
+          EOF
