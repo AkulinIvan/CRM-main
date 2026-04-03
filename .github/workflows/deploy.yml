@@ -18,25 +18,28 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 178.21.11.252 >> ~/.ssh/known_hosts
 
-      - name: Deploy to server
+      - name: Install rsync
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
+
+      - name: Sync files to server
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            --exclude 'storage/logs/*' \
+            --exclude 'vendor' \
+            ./ root@178.21.11.252:/home/aiv/ADS/CRM-main/
+
+      - name: Verify deployment
         run: |
           ssh -i ~/.ssh/deploy_key root@178.21.11.252 << 'EOF'
-            echo "=== Starting deployment ==="
-            
-            # Переходим в директорию проекта
-            cd /home/aiv/ADS
-            
-            # Проверяем, есть ли git репозиторий
-            if [ -d .git ]; then
-              echo "Pulling latest changes..."
-              git pull origin main
-            else
-              echo "Cloning repository..."
-              git clone https://github.com/AkulinIvan/CRM-main.git .
-            fi
-            
-            echo "=== Deployment completed successfully ==="
-            echo "Current directory: $(pwd)"
-            echo "Latest commit:"
-            git log -1 --oneline
+            cd /home/aiv/ADS/CRM-main
+            echo "=== Files on server ==="
+            ls -la
+            echo "=== Total files: $(find . -type f | wc -l) ==="
           EOF
