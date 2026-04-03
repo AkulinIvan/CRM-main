@@ -11,6 +11,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug - Check if secret exists
+        run: |
+          if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "SSH_PRIVATE_KEY exists (length: ${#SSH_PRIVATE_KEY})"
+          else
+            echo "❌ SSH_PRIVATE_KEY is empty or not set!"
+          fi
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
@@ -24,10 +34,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            echo "✅ Connected to server successfully!"
-            cd /root
-            ls -la
-            # Добавьте сюда ваши команды деплоя
-            # Например:
-            # cd /var/www/myapp
-            # git pull
+            echo "✅ Connected!"
