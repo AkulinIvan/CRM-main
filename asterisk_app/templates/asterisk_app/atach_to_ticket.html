@@ -1,26 +1,96 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Привязка звонка к заявке - CRM{% endblock %}
 
 {% block content %}
-<h1>Привязка звонка к заявке</h1>
-
-<div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title">Информация о звонке</h5>
-        <p><strong>Номер:</strong> {{ call.phone }}</p>
-        <p><strong>Дата/время:</strong> {{ call.call_date|date:"d.m.Y H:i" }}</p>
-        <p><strong>Тип:</strong> {{ call.get_call_type_display }}</p>
-        {% if call.get_recording_url %}
-        <audio controls preload="none">
-            <source src="{{ call.get_recording_url }}" type="audio/wav">
-        </audio>
-        {% endif %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>Привязка звонка к заявке
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Информация о звонке -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Информация о звонке</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Номер:</strong> 
+                                    <a href="tel:{{ call.phone }}">{{ call.phone }}</a>
+                                </p>
+                                <p class="mb-1"><strong>Дата/время:</strong> {{ call.call_date|date:"d.m.Y H:i:s" }}</p>
+                                <p class="mb-1"><strong>Тип:</strong> {{ call.get_call_type_display }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Длительность:</strong> {{ call.duration }} сек</p>
+                                <p class="mb-1"><strong>Статус:</strong> {{ call.get_call_status_display }}</p>
+                                <p class="mb-1"><strong>Сотрудник:</strong> {{ call.user.get_full_name|default:"Не назначен" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if call.get_recording_url %}
+                        <hr>
+                        <div class="text-center">
+                            <audio controls preload="none" class="w-100">
+                                <source src="{{ call.get_recording_url }}" type="audio/wav">
+                            </audio>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Форма привязки -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.ticket.id_for_label }}" class="form-label fw-bold">
+                                {{ form.ticket.label }}
+                            </label>
+                            {{ form.ticket }}
+                            {% if form.ticket.help_text %}
+                                <div class="form-text">{{ form.ticket.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.ticket.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Совет:</strong> Показаны заявки, связанные с номером {{ call.phone }}, 
+                            а также заявки без привязанных звонков.
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'asterisk_app:call_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Привязать
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Привязать</button>
-    <a href="{% url 'calls:call_list' %}" class="btn btn-secondary">Отмена</a>
-</form>
+<style>
+    select {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid #ced4da;
+    }
+    select:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
 {% endblock %}

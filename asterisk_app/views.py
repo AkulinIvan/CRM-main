@@ -127,6 +127,15 @@ def call_list(request):
         calls = calls.filter(call_date__gte=date_from)
     if date_to:
         calls = calls.filter(call_date__lte=date_to)
+        
+    # Статистика по типам звонков
+    stats = {
+        'incoming': Call.objects.filter(call_type='incoming').count(),
+        'outgoing': Call.objects.filter(call_type='outgoing').count(),
+        'missed': Call.objects.filter(call_type='missed').count(),
+        'voicemail': Call.objects.filter(call_type='voicemail').count(),
+        'total': Call.objects.count(),
+    }
     
     # Пагинация
     paginator = Paginator(calls, 25)
@@ -159,8 +168,8 @@ def attach_call_to_ticket(request, call_id):
         tickets = Ticket.objects.filter(
             Q(contact_phone__icontains=call.phone) | 
             Q(calls__isnull=True)
-        )
-        form = AttachCallToTicketForm(initial={'ticket': None})
+        ).distinct()
+        form = AttachCallToTicketForm()
         form.fields['ticket'].queryset = tickets
     
     return render(request, 'asterisk_app/attach_to_ticket.html', {

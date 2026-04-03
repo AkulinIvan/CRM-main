@@ -200,6 +200,21 @@
                 padding: 20px;
             }
         }
+
+        audio {
+            width: 100%;
+            max-width: 300px;
+            height: 40px;
+        }
+        audio::-webkit-media-controls-panel {
+            background-color: #f8f9fa;
+        }
+        .table audio {
+            max-width: 200px;
+        }
+        .modal audio {
+            max-width: 100%;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
