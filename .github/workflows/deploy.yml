@@ -18,18 +18,25 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 178.21.11.252 >> ~/.ssh/known_hosts
 
-      - name: Test SSH connection
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new root@178.21.11.252 "echo '✅ SSH connection successful!'"
-
       - name: Deploy to server
         run: |
           ssh -i ~/.ssh/deploy_key root@178.21.11.252 << 'EOF'
-            echo "=== Connected to server ==="
-            cd /root
-            pwd
-            ls -la
-            echo "=== Deployment completed ==="
+            echo "=== Starting deployment ==="
+            
+            # Переходим в директорию проекта
+            cd /home/aiv/ADS
+            
+            # Проверяем, есть ли git репозиторий
+            if [ -d .git ]; then
+              echo "Pulling latest changes..."
+              git pull origin main
+            else
+              echo "Cloning repository..."
+              git clone https://github.com/AkulinIvan/CRM-main.git .
+            fi
+            
+            echo "=== Deployment completed successfully ==="
+            echo "Current directory: $(pwd)"
+            echo "Latest commit:"
+            git log -1 --oneline
           EOF
-
-# test
