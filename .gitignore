@@ -4,7 +4,8 @@
 venv/
 __pycache__
 *.sqlite3
-migrations
+*_initial.py
+
 tests
 tests.py
 *.jpg
