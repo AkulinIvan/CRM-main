@@ -435,3 +435,18 @@ ASTERISK_SOCKET_PATH = os.getenv('ASTERISK_SOCKET_PATH', '/tmp/asterisk_crm.sock
 # Записи звонков
 ASTERISK_RECORDINGS_PATH = os.getenv('ASTERISK_RECORDINGS_PATH', '/var/spool/asterisk/monitor')
 ASTERISK_RECORDINGS_URL = os.getenv('ASTERISK_RECORDINGS_URL', '/recordings/')
+
+# Настройки безопасности
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+X_FRAME_OPTIONS = 'DENY'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://178.21.11.252',
+    'https://178.21.11.252',
+    'http://localhost',
+    'http://127.0.0.1',
+]
