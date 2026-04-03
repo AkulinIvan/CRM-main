@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление исполнителя {{ executor.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Подтверждение удаления
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5>Вы уверены, что хотите удалить исполнителя?</h5>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-exclamation-octagon-fill"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="alert-heading">Внимание!</h6>
+                                <p class="mb-0">
+                                    Будет удален аккаунт <strong>{{ executor.get_full_name }}</strong> ({{ executor.username }}).
+                                    {% if executor.assigned_tickets.exists %}
+                                    <br>Этот исполнитель имеет {{ executor.assigned_tickets.count }} активных заявок.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Специализация:</dt>
+                                <dd class="col-sm-8">{{ executor.executor_profile.get_specialization_display }}</dd>
+                                
+                                <dt class="col-sm-4">Компания:</dt>
+                                <dd class="col-sm-8">{{ executor.management_company.name|default:"Не указана" }}</dd>
+                                
+                                <dt class="col-sm-4">Дата регистрации:</dt>
+                                <dd class="col-sm-8">{{ executor.date_joined|date:"d.m.Y H:i" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    {% if executor.assigned_tickets.exists %}
+                    <div class="card border-warning mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="bi bi-ticket-detailed"></i> Переназначение заявок
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="new_executor" class="form-label">
+                                    Назначить нового исполнителя для {{ executor.assigned_tickets.count }} заявок:
+                                </label>
+                                <select class="form-select" id="new_executor" name="new_executor" required>
+                                    <option value="" selected disabled>Выберите исполнителя</option>
+                                    {% for new_exec in available_executors %}
+                                        {% if new_exec.pk != executor.pk %}
+                                        <option value="{{ new_exec.pk }}">
+                                            {{ new_exec.get_full_name }} ({{ new_exec.executor_profile.get_specialization_display }})
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Выберите исполнителя с такой же специализацией для переноса заявок
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounts:executor_detail' executor.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Подтвердить удаление
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

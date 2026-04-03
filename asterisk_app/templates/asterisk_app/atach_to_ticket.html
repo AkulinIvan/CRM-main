@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Привязка звонка к заявке</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Информация о звонке</h5>
+        <p><strong>Номер:</strong> {{ call.phone }}</p>
+        <p><strong>Дата/время:</strong> {{ call.call_date|date:"d.m.Y H:i" }}</p>
+        <p><strong>Тип:</strong> {{ call.get_call_type_display }}</p>
+        {% if call.get_recording_url %}
+        <audio controls preload="none">
+            <source src="{{ call.get_recording_url }}" type="audio/wav">
+        </audio>
+        {% endif %}
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Привязать</button>
+    <a href="{% url 'calls:call_list' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

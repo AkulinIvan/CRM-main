@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Назначения исполнителей</h2>
+<a href="{% url 'accounts:create_assignment' %}" class="btn btn-primary mb-3">Добавить назначение</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Адрес</th>
+            <th>Исполнитель</th>
+            <th>Специализация</th>
+            <th>Основной</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for assignment in assignments %}
+        <tr>
+            <td>{{ assignment.address }}</td>
+            <td>{{ assignment.executor.get_full_name }}</td>
+            <td>{{ assignment.specialization }}</td>
+            <td>{% if assignment.is_primary %}Да{% else %}Нет{% endif %}</td>
+            <td>
+                <a href="{% url 'accounts:update_assignment' assignment.pk %}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

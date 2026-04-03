@@ -1,0 +1,153 @@
+[
+    {
+        "model": "accounts.specialization",
+        "pk": 1,
+        "fields": {
+            "name": "Сантехник",
+            "code": "plumber",
+            "description": "Работы по водоснабжению и канализации",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 2,
+        "fields": {
+            "name": "Электрик",
+            "code": "electrician",
+            "description": "Работы по электрике и электрооборудованию",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 3,
+        "fields": {
+            "name": "Плотницкие работы",
+            "code": "carpenter",
+            "description": "Работы по дверям, почтовым ящикам и т.д.",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 4,
+        "fields": {
+            "name": "Уборщицы",
+            "code": "cleaners",
+            "description": "Уборка помещений",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 5,
+        "fields": {
+            "name": "Дворники",
+            "code": "janitors",
+            "description": "Уборка прилегающей к дому территории",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 6,
+        "fields": {
+            "name": "Благоустройство",
+            "code": "land_improvement",
+            "description": "Работы по благоустройству дворовой территории",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 7,
+        "fields": {
+            "name": "Сети",
+            "code": "networks",
+            "description": "Работы по интернет сетям",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 8,
+        "fields": {
+            "name": "Инженер",
+            "code": "engineer",
+            "description": "Инженерные работы и технический надзор",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 9,
+        "fields": {
+            "name": "Дератация",
+            "code": "deratization",
+            "description": "Борьба с грызунами (крысами, мышами) для предотвращения болезней и повреждений имущества",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 10,
+        "fields": {
+            "name": "Дезинсекция",
+            "code": "disinsection",
+            "description": "Мероприятия, направленные на уничтожение вредных насекомых (и их личинок), которые могут переносить болезни, портить продукты, материалы или просто доставлять дискомфорт",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 11,
+        "fields": {
+            "name": "Дезинфекция",
+            "code": "disinfection",
+            "description": "Комплекс мер, направленных на уничтожение болезнетворных микроорганизмов (бактерий, вирусов, грибков) в окружающей среде для предотвращения их распространения и заражения людей, животных или продуктов",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 12,
+        "fields": {
+            "name": "Проверка счетчиков",
+            "code": "checking_meters",
+            "description": "Проверка счетчиков",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 13,
+        "fields": {
+            "name": "Осмотр СОИ",
+            "code": "inspection_of_the_SIO",
+            "description": "Осмотр СОИ",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 14,
+        "fields": {
+            "name": "Паспортный",
+            "code": "passport",
+            "description": "Выдача справок",
+            "is_active": true
+        }
+    },
+    {
+        "model": "accounts.specialization",
+        "pk": 15,
+        "fields": {
+            "name": "Домофон",
+            "code": "intercom",
+            "description": "Домофонные работы",
+            "is_active": true
+        }
+    }
+    
+]

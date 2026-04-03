@@ -1,0 +1,11 @@
+/logs/
+.env
+*.env
+venv/
+__pycache__
+*.sqlite3
+migrations
+tests
+tests.py
+*.jpg
+.coverage

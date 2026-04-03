@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ executor.get_full_name }} | Исполнитель{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-badge"></i> {{ executor.get_full_name }}
+                    </h4>
+                    <div>
+                        <span class="badge bg-secondary">
+                            Исполнитель
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Основная информация</h5>
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Логин:</dt>
+                                        <dd class="col-sm-8">{{ executor.username }}</dd>
+
+                                        <dt class="col-sm-4">Email:</dt>
+                                        <dd class="col-sm-8">{{ executor.email|default:"-" }}</dd>
+
+                                        <dt class="col-sm-4">Телефон:</dt>
+                                        <dd class="col-sm-8">{{ executor.phone|default:"-" }}</dd>
+
+                                        <dt class="col-sm-4">Компания:</dt>
+                                        <dd class="col-sm-8">{{ executor.management_company.name|default:"-" }}</dd>
+
+                                        <dt class="col-sm-4">Специализация:</dt>
+                                        <dd class="col-sm-8">
+                                            {{ executor.executor_profile.specialization|default:"Не указана" }}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Статистика</h5>
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-6">Всего заявок:</dt>
+                                        <dd class="col-sm-6">{{ executor.get_assigned_tickets_count }}</dd>
+                                    
+                                        <dt class="col-sm-6">В работе:</dt>
+                                        <dd class="col-sm-6">
+                                            {{ executor.get_in_progress_tickets_count }}
+                                        </dd>
+                                    
+                                        <dt class="col-sm-6">Выполнено:</dt>
+                                        <dd class="col-sm-6">
+                                            {{ executor.get_completed_tickets_count }}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- История заявок исполнителя -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                                <span>История заявок</span>
+                                <span class="badge bg-primary rounded-pill">
+                                    {{ executor.assigned_tickets.count }}
+                                </span>
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Название</th>
+                                            <th>Статус</th>
+                                            <th>Приоритет</th>
+                                            <th>Дата создания</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ticket in executor.assigned_tickets.all|dictsortreversed:"created_at" %}
+                                        <tr>
+                                            <td>{{ ticket.id }}</td>
+                                            <td>
+                                                <a href="{% url 'tickets:detail_ticket' ticket.pk %}">
+                                                    {{ ticket.title|truncatechars:30 }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if ticket.status == 'completed' %}bg-success
+                                                    {% elif ticket.status == 'in_progress' %}bg-primary
+                                                    {% elif ticket.status == 'assigned' %}bg-info
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ ticket.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if ticket.priority == 'high' %}bg-danger
+                                                    {% elif ticket.priority == 'medium' %}bg-warning
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ ticket.get_priority_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ ticket.created_at|date:"d.m.Y H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'tickets:detail_ticket' ticket.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Просмотреть">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">Нет заявок</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <small class="text-muted">
+                                Показано {{ executor.assigned_tickets.count }} заявок
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'accounts:executor_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад к списку
+                        </a>
+                        {% if can_edit or can_delete %}
+                        <div class="btn-group">
+                            {% if can_edit %}
+                            <a href="{% url 'accounts:executor_update' executor.pk %}" class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Редактировать
+                            </a>
+                            {% endif %}
+                            {% if can_delete %}
+                            <a href="{% url 'accounts:executor_delete' executor.pk %}" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Удалить
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    .badge {
+        font-weight: 500;
+    }
+    .card {
+        border-radius: 0.5rem;
+    }
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+</style>
+{% endblock %}

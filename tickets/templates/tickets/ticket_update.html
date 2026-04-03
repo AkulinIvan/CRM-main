@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование заявки #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-pencil-fill"></i> Редактирование заявки #{{ ticket.id }}
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-flex align-items-center mb-4">
+                            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-3 fs-4"></i>
+                            <div class="fs-5">{{ message }}</div>
+                            <button type="button" class="btn-close btn-lg" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="ticketForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger d-flex align-items-center mb-4">
+                                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                                <div class="fs-5">
+                                    {% for error in form.non_field_errors %}
+                                        <strong>{{ error }}</strong>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Название и адрес -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-4 mb-lg-0">
+                                <label for="{{ form.title.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-card-heading text-primary me-2"></i> Название заявки *
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.title.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <label for="{{ form.address.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-geo-alt-fill text-primary me-2"></i> Адрес *
+                                </label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.address.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                                <div class="address-info mt-3 p-3 bg-light rounded fs-5">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-building text-primary me-2"></i>
+                                        <strong>Управляющая компания:</strong> {{ ticket.management_company }}
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-person-check text-primary me-2"></i>
+                                        <strong>Ответственный:</strong> 
+                                        {% if ticket.executor %}
+                                            {{ ticket.executor.get_full_name|default:ticket.executor.username }}
+                                        {% else %}
+                                            <em>Не назначен</em>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Описание проблемы -->
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fs-5">
+                                <i class="bi bi-text-paragraph text-primary me-2"></i> Подробное описание проблемы *
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                    {{ form.description.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Статус и приоритет -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-4 mb-lg-0">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-list-check text-primary me-2"></i> Статус *
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.status.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-exclamation-triangle-fill text-primary me-2"></i> Приоритет *
+                                </label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.priority.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Мастер -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-4 mb-lg-0">
+                                <label for="{{ form.master.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-person-badge text-primary me-2"></i> Мастер
+                                </label>
+                                {{ form.master }}
+                                <small class="text-muted">Выберите мастера участка</small>
+                                {% if form.master.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.master.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Исполнитель и специализация -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-4 mb-lg-0">
+                                <label for="{{ form.executor.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-person-badge text-primary me-2"></i> Исполнитель
+                                </label>
+                                {{ form.executor }}
+                                {% if form.executor.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.executor.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text fs-6 mt-2">
+                                    <i class="bi bi-info-circle"></i> Автоматически назначается из адреса
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <label for="{{ form.specialization.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-tools text-primary me-2"></i> Специализация
+                                </label>
+                                {{ form.specialization }}
+                                {% if form.specialization.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.specialization.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Прикрепленные файлы -->
+                        <div class="mb-4">
+                            <label for="{{ form.files.id_for_label }}" class="form-label fs-5">
+                                <i class="bi bi-paperclip text-primary me-2"></i> Прикрепленные файлы
+                            </label>
+                            {{ form.files }}
+                            {% if form.files.errors %}
+                                <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                    {{ form.files.errors.as_text }}
+                                </div>
+                            {% endif %}
+                            {% if ticket.files.all %}
+                                <div class="mt-3">
+                                    <h5 class="fs-5 mb-2"><i class="bi bi-files text-primary me-2"></i>Текущие файлы:</h5>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        {% for file in ticket.files.all %}
+                                        <a href="{{ file.file.url }}" target="_blank" class="btn btn-outline-primary btn-lg">
+                                            <i class="bi 
+                                                {% if '.pdf' in file.file.name %}bi-file-earmark-pdf
+                                                {% elif '.jpg' in file.file.name or '.jpeg' in file.file.name or '.png' in file.file.name %}bi-file-image
+                                                {% else %}bi-file-earmark{% endif %}-fill me-2"></i>
+                                            {{ file.file.name|slice:"-15:" }}
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Кнопки отправки -->
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'tickets:detail_ticket' ticket.pk %}" class="btn btn-secondary btn-lg me-md-3">
+                                <i class="bi bi-arrow-left-circle-fill"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle-fill"></i> Сохранить изменения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Увеличение элементов формы
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.classList.add('form-control-lg');
+        input.style.fontSize = '1.1rem';
+    });
+
+    // Валидация формы перед отправкой
+    const form = document.getElementById('ticketForm');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = ['title', 'address', 'description', 'status', 'priority'];
+        
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(`id_${fieldId}`);
+            if (field && !field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show d-flex align-items-center mt-3';
+            alertDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                <div class="fs-5">
+                    <strong>Пожалуйста, заполните все обязательные поля</strong>
+                </div>
+                <button type="button" class="btn-close btn-lg" data-bs-dismiss="alert"></button>
+            `;
+            form.prepend(alertDiv);
+            
+            // Прокрутка к первой ошибке
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
+
+    // Удаление класса is-invalid при вводе
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // Динамическое обновление списка исполнителей при выборе мастера
+    const masterSelect = document.getElementById('id_master');
+    const executorSelect = document.getElementById('id_executor');
+    
+    if (masterSelect && executorSelect) {
+        masterSelect.addEventListener('change', function() {
+            const masterId = this.value;
+            if (masterId) {
+                fetch(`/api/executors/?master_id=${masterId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        executorSelect.innerHTML = '<option value="">---------</option>';
+                        data.executors.forEach(executor => {
+                            const option = document.createElement('option');
+                            option.value = executor.id;
+                            option.textContent = `${executor.full_name} (${executor.specialization})`;
+                            executorSelect.appendChild(option);
+                        });
+                    });
+            } else {
+                executorSelect.innerHTML = '<option value="">---------</option>';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    .form-control-lg {
+        padding: 1rem 1.2rem;
+        border-radius: 0.5rem;
+        border-width: 2px;
+    }
+    
+    .form-select-lg {
+        padding: 1rem 1.2rem;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .form-label {
+        margin-bottom: 0.8rem;
+    }
+    
+    .btn-lg {
+        padding: 0.8rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1.1rem;
+        min-width: 220px;
+    }
+    
+    .invalid-feedback {
+        font-size: 1rem;
+    }
+    
+    .alert {
+        font-size: 1.1rem;
+    }
+    
+    textarea.form-control {
+        min-height: 150px;
+    }
+    
+    .card {
+        border-radius: 12px;
+    }
+    
+    .address-info {
+        border-left: 4px solid #0d6efd;
+    }
+</style>
+{% endblock %}

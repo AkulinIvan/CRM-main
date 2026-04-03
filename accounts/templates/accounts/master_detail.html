@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">
+                <i class="bi bi-person-badge"></i> {{ master.get_full_name }}
+            </h2>
+            <div>
+                <span class="badge bg-primary fs-6">
+                    Мастер участка
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Основная информация</h4>
+                    <dl class="row">
+                        <dt class="col-sm-4">Компания:</dt>
+                        <dd class="col-sm-8">{{ master.management_company.name }}</dd>
+                        
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">{{ master.email }}</dd>
+                        
+                        <dt class="col-sm-4">Телефон:</dt>
+                        <dd class="col-sm-8">{{ master.phone }}</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <h4>Статистика</h4>
+                    <dl class="row">
+                        <dt class="col-sm-6">Исполнителей:</dt>
+                        <dd class="col-sm-6">{{ master.get_subordinates.count }}</dd>
+                        
+                        <dt class="col-sm-6">Заявок в работе:</dt>
+                        <dd class="col-sm-6">{{ master.get_assigned_tickets_count }}</dd>
+                    </dl>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-1">Исполнители мастера</h3>
+                    {% comment %} {% if request.user.is_admin or request.user.is_coordinator or request.user == master %}
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addExecutorModal">
+                        <i class="bi bi-plus-lg"></i> Добавить исполнителя
+                    </button>
+                    {% endif %} {% endcomment %}
+                </div>
+                
+                {% if executors %}
+                    <div class="list-group">
+                        {% for executor in executors %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{% url 'accounts:executor_detail' executor.pk %}" class="text-decoration-none flex-grow-1">
+                                <div>
+                                    <h5 class="mb-1">{{ executor.get_full_name }}</h5>
+                                    <small class="text-muted">{{ executor.executor_profile.get_specialization_display }}</small>
+                                </div>
+                            </a>
+                            <span class="badge bg-primary rounded-pill me-2">
+                                {{ executor.get_assigned_tickets_count }} заявок
+                            </span>
+                            {% if request.user.is_admin or request.user.is_coordinator or request.user == master %}
+                            <form method="post" action="{% url 'accounts:remove_executor_from_master' master.pk executor.pk %}" class="ms-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить из подчинения">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        У мастера нет закрепленных исполнителей
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-between">
+            <a href="{% url 'accounts:master_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Назад к списку
+            </a>
+            {% if can_edit or can_delete %}
+            <div class="btn-group">
+                {% if can_edit %}
+                <a href="{% url 'accounts:master_update' master.pk %}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+                {% endif %}
+                {% if can_delete %}
+                <a href="{% url 'accounts:master_delete' master.pk %}" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Удалить
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для добавления исполнителя -->
+<div class="modal fade" id="addExecutorModal" tabindex="-1" aria-labelledby="addExecutorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addExecutorModalLabel">Добавить исполнителя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'accounts:add_executor_to_master' master.pk %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="executorSelect" class="form-label">Выберите исполнителя</label>
+                        <select class="form-select" id="executorSelect" name="executor_id" required>
+                            <option value="">-- Выберите исполнителя --</option>
+                            {% for executor in available_executors %}
+                                <option value="{{ executor.pk }}">
+                                    {{ executor.get_full_name }} ({{ executor.executor_profile.get_specialization_display }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .list-group-item {
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .list-group-item a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Новая заявка{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-plus-circle-fill"></i> Создание новой заявки
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-flex align-items-center mb-4">
+                            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-3 fs-4"></i>
+                            <div class="fs-5">{{ message }}</div>
+                            <button type="button" class="btn-close btn-lg" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="ticketForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger d-flex align-items-center mb-4">
+                                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                                <div class="fs-5">
+                                    {% for error in form.non_field_errors %}
+                                        <strong>{{ error }}</strong>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Название заявки -->
+                        <div class="mb-4">
+                            <label for="{{ form.title.id_for_label }}" class="form-label fs-5">
+                                <i class="bi bi-card-heading text-primary me-2"></i> Название заявки *
+                            </label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                    {{ form.title.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Адрес -->
+                        <div class="mb-4">
+                            <label class="form-label fs-5">
+                                <i class="bi bi-geo-alt-fill text-primary me-2"></i> Адрес *
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <select class="form-select form-select-lg" id="id_street" name="street" required>
+                                        <option value="" selected disabled>Выберите улицу</option>
+                                        {% for street in streets %}
+                                            <option value="{{ street }}" {% if request.POST.street == street %}selected{% endif %}>{{ street }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if not request.POST.street and request.method == 'POST' %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        Укажите улицу
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-lg" id="id_building" name="building" required>
+                                        <option value="" selected disabled>Выберите дом</option>
+                                        {% for building in buildings %}
+                                            <option value="{{ building }}" {% if request.POST.building == building %}selected{% endif %}>{{ building }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if not request.POST.building and request.method == 'POST' %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        Укажите дом
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control form-control-lg" id="id_apartment" name="apartment" 
+                                           value="{{ request.POST.apartment }}" placeholder="Квартира (необязательно)">
+                                </div>
+                            </div>
+                            <input type="hidden" id="id_address" name="address">
+                        </div>
+
+                        <!-- Описание проблемы -->
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fs-5">
+                                <i class="bi bi-text-paragraph text-primary me-2"></i> Подробное описание проблемы *
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                    {{ form.description.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Исполнитель и приоритет -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="{{ form.executor.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-person-badge text-primary me-2"></i> Исполнитель
+                                </label>
+                                {{ form.executor }}
+                                {% if form.executor.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.executor.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-exclamation-triangle-fill text-primary me-2"></i> Приоритет *
+                                </label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.priority.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Статус и специализация -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-list-check text-primary me-2"></i> Статус *
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.status.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.specialization.id_for_label }}" class="form-label fs-5">
+                                    <i class="bi bi-tools text-primary me-2"></i> Специализация
+                                </label>
+                                {{ form.specialization }}
+                                {% if form.specialization.errors %}
+                                    <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {{ form.specialization.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Прикрепление файлов -->
+                        <div class="mb-4">
+                            <label for="{{ form.files.id_for_label }}" class="form-label fs-5">
+                                <i class="bi bi-paperclip text-primary me-2"></i> Прикрепить файлы
+                            </label>
+                            {{ form.files }}
+                            {% if form.files.errors %}
+                                <div class="invalid-feedback d-flex align-items-center mt-2 fs-5">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                    {{ form.files.errors.as_text }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text fs-6 mt-2">
+                                <i class="bi bi-info-circle"></i> Можно прикрепить до 3 файлов (jpg, png, pdf), каждый не более 5MB
+                            </div>
+                        </div>
+
+                        <!-- Кнопки отправки -->
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'tickets:list' %}" class="btn btn-secondary btn-lg me-md-3">
+                                <i class="bi bi-arrow-left-circle-fill"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle-fill"></i> Создать заявку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Увеличение элементов формы
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.classList.add('form-control-lg');
+        input.style.fontSize = '1.1rem';
+    });
+
+    // Объединение адресных полей
+    const form = document.getElementById('ticketForm');
+    form.addEventListener('submit', function(e) {
+        const street = document.getElementById('id_street').value;
+        const building = document.getElementById('id_building').value;
+        const apartment = document.getElementById('id_apartment').value;
+        
+        let address = street + ', д. ' + building;
+        if (apartment) {
+            address += ', кв. ' + apartment;
+        }
+        
+        document.getElementById('id_address').value = address;
+    });
+    
+    // Динамическая загрузка домов
+    const streetSelect = document.getElementById('id_street');
+    const buildingSelect = document.getElementById('id_building');
+    
+    if (streetSelect) {
+        streetSelect.addEventListener('change', function() {
+            const street = this.value;
+            if (street) {
+                fetch(`/api/buildings/?street=${encodeURIComponent(street)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        buildingSelect.innerHTML = '<option value="" selected disabled>Выберите дом</option>';
+                        data.buildings.forEach(building => {
+                            const option = document.createElement('option');
+                            option.value = building;
+                            option.textContent = building;
+                            buildingSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+    }
+
+    // Валидация формы
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = ['title', 'street', 'building', 'description', 'priority', 'status'];
+        
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(`id_${fieldId}`);
+            if (field && !field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show d-flex align-items-center mt-3';
+            alertDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                <div class="fs-5">
+                    <strong>Пожалуйста, заполните все обязательные поля</strong>
+                </div>
+                <button type="button" class="btn-close btn-lg" data-bs-dismiss="alert"></button>
+            `;
+            form.prepend(alertDiv);
+            
+            // Прокрутка к первой ошибке
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
+
+    // Удаление класса is-invalid при вводе
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+    .form-control-lg {
+        padding: 1rem 1.2rem;
+        border-radius: 0.5rem;
+        border-width: 2px;
+    }
+    
+    .form-select-lg {
+        padding: 1rem 1.2rem;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .form-label {
+        margin-bottom: 0.8rem;
+    }
+    
+    .btn-lg {
+        padding: 0.8rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1.1rem;
+        min-width: 200px;
+    }
+    
+    .invalid-feedback {
+        font-size: 1rem;
+    }
+    
+    .alert {
+        font-size: 1.1rem;
+    }
+    
+    textarea.form-control {
+        min-height: 150px;
+    }
+    
+    .card {
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}

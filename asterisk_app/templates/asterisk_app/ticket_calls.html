@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Звонки по заявке #{{ ticket.id }}</h1>
+<h2>{{ ticket.title }}</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Дата/время</th>
+            <th>Номер</th>
+            <th>Тип</th>
+            <th>Длит. (сек)</th>
+            <th>Запись</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for call in calls %}
+        <tr>
+            <td>{{ call.call_date|date:"d.m.Y H:i" }}</td>
+            <td>{{ call.phone }}</td>
+            <td>{{ call.get_call_type_display }}</td>
+            <td>{{ call.duration }}</td>
+            <td>
+                {% if call.get_recording_url %}
+                <audio controls preload="none">
+                    <source src="{{ call.get_recording_url }}" type="audio/wav">
+                </audio>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'tickets:detail_ticket' ticket.id %}" class="btn btn-secondary">Назад к заявке</a>
+{% endblock %}

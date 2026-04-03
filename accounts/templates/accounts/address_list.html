@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Список адресов</h2>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Фильтр по управляющим компаниям</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'accounts:address_list' %}" 
+                   class="btn btn-outline-primary {% if not active_company %}active{% endif %}">
+                    Все компании
+                </a>
+                {% for company in management_companies %}
+                <a href="{% url 'accounts:address_list' %}?company={{ company.id }}" 
+                   class="btn btn-outline-primary {% if active_company.id == company.id %}active{% endif %}">
+                    {{ company.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Управляющая компания</th>
+                            <th>Адрес</th>
+                            <th>Специализации</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for address in addresses %}
+                        <tr>
+                            <td>{{ address.management_company.name }}</td>
+                            <td>{{ address.street }}, д. {{ address.building }}{% if address.apartment %}, кв. {{ address.apartment }}{% endif %}</td>
+                            <td>
+                                {% for assignment in address.assignments.all %}
+                                    <span class="badge bg-secondary me-1">
+                                        {{ assignment.specialization.name }} 
+                                        ({{ assignment.executor.get_full_name|default:"не назначен" }})
+                                    </span>
+                                {% empty %}
+                                    <span class="text-muted">Нет назначений</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4">
+                                {% if active_company %}
+                                    Нет адресов для выбранной управляющей компании
+                                {% else %}
+                                    Адресов не найдено
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

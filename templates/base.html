@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if system_settings %}{{ system_settings.site_name }}{% else %}CRM система{% endif %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <script src="{% static 'js/notifications.js' %}"></script>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --sidebar-bg: #005b96;
+            --sidebar-active-bg: #03396c;
+            --primary-color: #ff7b25;
+            --secondary-color: #6c757d;
+            --font-size-base: 18px;
+            --font-size-lg: 22px;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            min-height: 100vh;
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            padding: 25px 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .sidebar-brand {
+            padding: 0 25px 25px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-brand h4 {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            margin: 8px 0;
+            border-radius: 5px;
+            transition: all 0.2s;
+            font-size: var(--font-size-base);
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: var(--sidebar-active-bg);
+            border-left: 5px solid var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 15px;
+            width: 25px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 30px;
+            background-color: #fff;
+            min-height: 100vh;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .card-header {
+            background-color: #f1f8ff;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+            font-weight: 600;
+            padding: 18px 25px;
+            font-size: var(--font-size-base);
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 8px 12px;
+            font-size: 0.9em;
+        }
+        
+        .table {
+            font-size: var(--font-size-base);
+        }
+        
+        .table th {
+            font-weight: 600;
+            color: var(--secondary-color);
+            border-top: none;
+            padding: 15px;
+        }
+        
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            font-size: var(--font-size-base);
+        }
+        
+        .form-control, .form-select {
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 2px solid #e0e6ed;
+            font-size: var(--font-size-base);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: var(--font-size-base);
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #005b96;
+        }
+        
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #e6681c;
+            border-color: #e6681c;
+        }
+        
+        /* Увеличение элементов интерфейса */
+        .form-check-input {
+            width: 1.5em;
+            height: 1.5em;
+        }
+        
+        .form-check-label {
+            padding-left: 0.5em;
+        }
+        
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        
+        /* Улучшение видимости активного элемента */
+        .nav-link.active {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 992px) {
+            :root {
+                --sidebar-width: 250px;
+                --font-size-base: 16px;
+                --font-size-lg: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -280px;
+            }
+            .sidebar.active {
+                margin-left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h4 class="text-center">{% if system_settings %}{{ system_settings.site_name }}{% else %}CRM Заявки{% endif %}</h4>
+            <p class="text-white-50 text-center mb-0">{{ current_date|date:"d.m.Y" }}</p>
+        </div>
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+                    <i class="bi bi-house-door-fill"></i> Главная
+                </a>
+            </li>
+            {% if user.is_authenticated %}
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'tickets/list' in request.path %}active{% endif %}" href="{% url 'tickets:list' %}">
+                        <i class="bi bi-list-check"></i> Все заявки
+                    </a>
+                </li>
+                
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'tickets/create' in request.path %}active{% endif %}" href="{% url 'tickets:create_ticket' %}">
+                        <i class="bi bi-plus-square-fill"></i> Новая заявка
+                    </a>
+                </li>
+                {% if request.user.role == 'admin' or request.user.role == 'coordinator' or request.user.role == 'dispatcher' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'companies' in request.path %}active{% endif %}" href="{% url 'company:company_list' %}">
+                        <i class="bi bi-buildings-fill"></i> Организации
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.role == 'admin' or request.user.role == 'coordinator' or request.user.role == 'dispatcher' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'companies' in request.path %}active{% endif %}" href="{% url 'accounts:address_list' %}">
+                        <i class="bi bi-buildings-fill"></i> Адреса
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.role == 'admin' or request.user.role == 'coordinator' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'executors' in request.path %}active{% endif %}" href="{% url 'accounts:executor_list' %}">
+                        <i class="bi bi-person-badge-fill"></i> Сотрудники
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.role == 'admin' or request.user.role == 'coordinator' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'masters' in request.path %}active{% endif %}" href="{% url 'accounts:master_list' %}">
+                        <i class="bi bi-person-badge-fill"></i> Мастера
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.role == 'admin' or request.user.role == 'coordinator' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'masters' in request.path %}active{% endif %}" href="{% url 'accounts:assignment_list' %}">
+                        <i class="bi bi-person-badge-fill"></i> Назначение исполнителей
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if request.user.role == 'admin' or request.user.role == 'coordinator' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'asterisk_app:call_list' %}">
+                        <i class="bi bi-person-badge-fill"></i> Просмотр звонков
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_admin %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'settings' in request.path %}active{% endif %}" href="{% url 'settings:system_settings' %}">
+                        <i class="bi bi-gear-fill"></i> Настройки системы
+                    </a>
+                </li>
+                {% endif %}
+            {% else %}
+                <span class="badge bg-light text-dark ms-3 mt-2">Гостевой доступ</span>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            // You can add a toggle button in your navbar if needed
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

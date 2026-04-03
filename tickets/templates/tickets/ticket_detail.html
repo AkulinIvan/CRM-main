@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ ticket.title }} | Заявка #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <i class="bi bi-ticket-detailed-fill me-2"></i> Заявка #{{ ticket.id }}
+                    </h2>
+                    <div>
+                        <span class="badge fs-5 py-2 px-3
+                            {% if ticket.status == 'new' %}bg-primary
+                            {% elif ticket.status == 'assigned' %}bg-warning text-dark
+                            {% elif ticket.status == 'in_progress' %}bg-info text-dark
+                            {% elif ticket.status == 'completed' %}bg-success
+                            {% else %}bg-secondary{% endif %}">
+                            <i class="bi 
+                                {% if ticket.status == 'new' %}bi-file-earmark-plus
+                                {% elif ticket.status == 'assigned' %}bi-person-check
+                                {% elif ticket.status == 'in_progress' %}bi-hourglass-split
+                                {% elif ticket.status == 'completed' %}bi-check-circle
+                                {% else %}bi-question-circle{% endif %} me-1"></i>
+                            {{ ticket.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-lg-8">
+                            <h3 class="fs-2">{{ ticket.title }}</h3>
+                            <p class="text-muted fs-5">
+                                <i class="bi bi-calendar-check"></i> Создана: {{ ticket.created_at|date:"d.m.Y H:i" }}
+                            </p>
+                        </div>
+                        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                            <div class="btn-group btn-group-lg">
+                                <a href="{% url 'tickets:update_ticket' ticket.pk %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil-fill"></i> Изменить
+                                </a>
+                                <a href="{% url 'tickets:delete_ticket' ticket.pk %}" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash-fill"></i> Удалить
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Основная информация -->
+                        <div class="col-lg-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light py-3">
+                                    <h3 class="mb-0 fs-4">
+                                        <i class="bi bi-info-circle-fill text-primary me-2"></i> Основная информация
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row fs-5">
+                                        <dt class="col-sm-5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-exclamation-triangle-fill text-primary me-2"></i> Приоритет:
+                                        </dt>
+                                        <dd class="col-sm-7 mb-3">
+                                            <span class="badge fs-6 py-2
+                                                {% if ticket.priority == 'high' %}bg-danger
+                                                {% elif ticket.priority == 'medium' %}bg-warning text-dark
+                                                {% else %}bg-success{% endif %}">
+                                                {{ ticket.get_priority_display }}
+                                            </span>
+                                        </dd>
+
+                                        <dt class="col-sm-5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-geo-alt-fill text-primary me-2"></i> Адрес:
+                                        </dt>
+                                        <dd class="col-sm-7 mb-3">{{ ticket.address }}</dd>
+
+                                        <dt class="col-sm-5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-tools text-primary me-2"></i> Специализация:
+                                        </dt>
+                                        <dd class="col-sm-7 mb-3">{{ ticket.get_specialization_display }}</dd>
+
+                                        <dt class="col-sm-5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-person-badge-fill text-primary me-2"></i> Мастер:
+                                        </dt>
+                                        <dd class="col-sm-7 mb-3">
+                                            {% if ticket.master %}
+                                                {{ ticket.master.get_full_name|default:ticket.master.username }}
+                                            {% else %}
+                                                <span class="text-muted">Не назначен</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-person-badge-fill text-primary me-2"></i> Исполнитель:
+                                        </dt>
+                                        <dd class="col-sm-7 mb-3">
+                                            {% if ticket.executor %}
+                                                {{ ticket.executor.get_full_name|default:ticket.executor.username }}
+                                            {% else %}
+                                                <span class="text-muted">Не назначен</span>
+                                            {% endif %}
+                                        </dd>
+
+                                        <dt class="col-sm-5 mb-3 d-flex align-items-center">
+                                            <i class="bi bi-person-plus-fill text-primary me-2"></i> Создатель:
+                                        </dt>
+                                        <dd class="col-sm-7 mb-3">{{ ticket.created_by.get_full_name|default:ticket.created_by.username }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Описание проблемы -->
+                        <div class="col-lg-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light py-3">
+                                    <h3 class="mb-0 fs-4">
+                                        <i class="bi bi-text-paragraph-fill text-primary me-2"></i> Описание проблемы
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fs-5" style="line-height: 1.6;">
+                                        {{ ticket.description|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Прикрепленные файлы -->
+                    {% if ticket.files.all %}
+                    <div class="card mt-4 border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h3 class="mb-0 fs-4">
+                                <i class="bi bi-paperclip text-primary me-2"></i> Прикрепленные файлы
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap gap-3">
+                                {% for file in ticket.files.all %}
+                                <a href="{{ file.file.url }}" target="_blank" class="btn btn-outline-primary btn-lg">
+                                    <i class="bi 
+                                        {% if '.pdf' in file.file.name %}bi-file-earmark-pdf
+                                        {% elif '.jpg' in file.file.name or '.jpeg' in file.file.name or '.png' in file.file.name %}bi-file-image
+                                        {% else %}bi-file-earmark{% endif %}-fill me-2"></i>
+                                    {{ file.file.name|slice:"-15:" }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="card mt-4 border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h3 class="mb-0 fs-4">
+                                <i class="bi bi-clock-history text-primary me-2"></i> История исполнителей
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            {% if ticket.executor_history.all %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата изменения</th>
+                                            <th>Исполнитель</th>
+                                            <th>Изменено пользователем</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in ticket.executor_history.all %}
+                                        <tr>
+                                            <td>{{ record.changed_at|date:"d.m.Y H:i" }}</td>
+                                            <td>
+                                                {% if record.executor %}
+                                                    {{ record.executor.get_full_name|default:record.executor.username }}
+                                                {% else %}
+                                                    <span class="text-muted">Не назначен</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if record.changed_by %}
+                                                    {{ record.changed_by.get_full_name|default:record.changed_by.username }}
+                                                {% else %}
+                                                    <span class="text-muted">Система</span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">История изменений исполнителей отсутствует</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    
+                        <!-- Блок уведомлений -->
+                        <div class="card body">
+                            <div class="card-header">
+                                <h5>История уведомлений</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>SMS уведомления:</h6>
+                                <ul class="list-group mb-3">
+                                    {% for sms in ticket.get_sms_statuses %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ sms.recipient_type|title }} ({{ sms.phone }})
+                                        <span class="badge badge-{% if sms.status == 'delivered' %}success
+                                                               {% elif sms.status == 'failed' %}danger
+                                                               {% else %}info{% endif %}">
+                                            {{ sms.get_status_display }}
+                                        </span>
+                                    </li>
+                                    {% empty %}
+                                    <li class="list-group-item">Нет SMS уведомлений</li>
+                                    {% endfor %}
+                                </ul>
+
+                                <h6>Push уведомления:</h6>
+                                <ul class="list-group">
+                                    {% for push in ticket.get_push_statuses %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ push.recipient.get_full_name }}
+                                        <span class="badge badge-{% if push.status == 'delivered' %}success
+                                                               {% elif push.status == 'failed' %}danger
+                                                               {% else %}info{% endif %}">
+                                            {{ push.get_status_display }}
+                                        </span>
+                                    </li>
+                                    {% empty %}
+                                    <li class="list-group-item">Нет push уведомлений</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'tickets:list' %}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-arrow-left-circle-fill"></i> Вернуться к списку
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+    
+    .badge {
+        font-weight: 500;
+        min-width: 120px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-group-lg .btn {
+        min-width: 120px;
+    }
+    
+    .btn-lg {
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    dt, dd {
+        padding: 8px 0;
+    }
+</style>
+{% endblock %}

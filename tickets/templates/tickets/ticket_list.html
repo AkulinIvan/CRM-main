@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Список заявок | CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Шапка страницы -->
+    <header class="d-flex justify-content-between align-items-center mb-4 px-3">
+        <div>
+            <h1 class="h3 mb-0 text-primary">
+                <i class="bi bi-ticket-detailed me-2"></i>Список заявок
+            </h1>
+            <nav aria-label="breadcrumb" class="mt-2">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Заявки</li>
+                </ol>
+            </nav>
+        </div>
+        
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle me-1"></i>
+                {{ request.user.get_full_name|default:request.user.username }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Выход</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Основной контент -->
+    <main class="px-3">
+        <!-- Панель управления -->
+        <section class="card mb-4 border-0 shadow-sm">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-center" id="filterForm">
+                    <!-- Основные фильтры -->
+                    <div class="col-xl-4 col-lg-6 col-md-12 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Поиск...">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-funnel-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-xl-2 col-lg-3 col-md-6 mb-2">
+                        <select class="form-select" name="status">
+                            <option value="">Все статусы</option>
+                            {% for value, name in status_choices %}
+                                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-xl-2 col-lg-3 col-md-6 mb-2">
+                        <select class="form-select" name="priority">
+                            <option value="">Все приоритеты</option>
+                            {% for value, name in priority_choices %}
+                                <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-xl-2 col-lg-3 col-md-6 mb-2">
+                        <select class="form-select" name="specialization">
+                            <option value="all">Все специализации</option>
+                            {% for value in specializations %}
+                                <option value="{{ value.id }}" {% if specialization_filter == value.id %}selected{% endif %}>{{ value.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-xl-2 col-lg-3 col-md-6 mb-2">
+                        <a href="{% url 'tickets:create_ticket' %}" class="btn btn-success w-100">
+                            <i class="bi bi-plus-lg me-1"></i>Новая
+                        </a>
+                    </div>
+                    
+                    <!-- Дополнительные фильтры -->
+                    <div class="col-12">
+                        <a class="text-decoration-none small d-flex align-items-center" data-bs-toggle="collapse" href="#advancedFilters">
+                            <i class="bi bi-funnel me-1"></i>
+                            <span>Дополнительные фильтры</span>
+                            <i class="bi bi-chevron-down ms-1"></i>
+                        </a>
+                        
+                        <div class="collapse mt-2" id="advancedFilters">
+                            <div class="row g-2">
+                                <div class="col-lg-3 col-md-6">
+                                    <select class="form-select" name="date">
+                                        <option value="">Любая дата</option>
+                                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Сегодня</option>
+                                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Неделя</option>
+                                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Месяц</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-lg-3 col-md-6">
+                                    <input type="text" class="form-control date-range-picker" name="date_range" value="{{ date_range }}" placeholder="Диапазон дат">
+                                </div>
+                                
+                                <div class="col-lg-3 col-md-6">
+                                    <select class="form-select" name="executor">
+                                        <option value="">Все исполнители</option>
+                                        {% for executor in executors %}
+                                            <option value="{{ executor.id }}" {% if executor_filter == executor.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ executor.get_full_name|default:executor.username }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-lg-3 col-md-6">
+                                    <select class="form-select" name="sort_by">
+                                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Сначала новые</option>
+                                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Сначала старые</option>
+                                        <option value="-priority" {% if sort_by == '-priority' %}selected{% endif %}>По приоритету (↓)</option>
+                                        <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>По приоритету (↑)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Информация о фильтрах -->
+        {% if search_query or status_filter or priority_filter or date_filter or date_range or executor_filter or specialization_filter != 'all' %}
+        <section class="alert alert-info mb-4 py-2">
+            <div class="d-flex flex-wrap align-items-center">
+                <i class="bi bi-funnel-fill me-2"></i>
+                <span class="me-2">Применены фильтры:</span>
+                
+                {% if search_query %}
+                <span class="badge bg-white text-dark border me-2 mb-1">
+                    <i class="bi bi-search me-1"></i>"{{ search_query }}"
+                </span>
+                {% endif %}
+                
+                {% if status_filter %}
+                <span class="badge bg-white text-dark border me-2 mb-1">
+                    <i class="bi bi-tag me-1"></i>Статус: {{ status_filter }}
+                </span>
+                {% endif %}
+                
+                {% if priority_filter %}
+                <span class="badge bg-white text-dark border me-2 mb-1">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Приоритет: {{ priority_filter }}
+                </span>
+                {% endif %}
+                
+                {% if date_filter %}
+                <span class="badge bg-white text-dark border me-2 mb-1">
+                    <i class="bi bi-calendar me-1"></i>
+                    {% if date_filter == 'today' %}Сегодня
+                    {% elif date_filter == 'week' %}Неделя
+                    {% else %}Месяц{% endif %}
+                </span>
+                {% endif %}
+                
+                {% if specialization_filter and specialization_filter != 'all' %}
+                <span class="badge bg-white text-dark border me-2 mb-1">
+                    <i class="bi bi-tools me-1"></i>{{ specialization_filter }}
+                </span>
+                {% endif %}
+                
+                {% if executor_filter %}
+                <span class="badge bg-white text-dark border me-2 mb-1">
+                    <i class="bi bi-person-check me-1"></i>
+                    {% for e in executors %}{% if e.id == executor_filter|add:0 %}{{ e.get_full_name|default:e.username }}{% endif %}{% endfor %}
+                </span>
+                {% endif %}
+                
+                <a href="{% url 'tickets:list' %}" class="btn btn-sm btn-outline-danger ms-auto mb-1">
+                    <i class="bi bi-x-lg me-1"></i>Сбросить
+                </a>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Таблица заявок -->
+        <section class="card border-0 shadow mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="py-3 px-3">№</th>
+                                <th class="py-3 px-3">Адрес</th>
+                                <th class="py-3 px-3">Название</th>
+                                <th class="py-3 px-3">Статус</th>
+                                <th class="py-3 px-3">Приоритет</th>
+                                <th class="py-3 px-3">Исполнитель</th>
+                                <th class="py-3 px-3">Мастер</th>
+                                <th class="py-3 px-3">Дата</th>
+                                <th class="py-3 px-3">SMS статус</th>
+                                <th class="py-3 px-3">Push статус</th>
+                                <th class="py-3 px-3 text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in page_obj %}
+                            <tr>
+                                <td class="py-2 px-3 fw-bold text-muted">#{{ ticket.id }}</td>
+                                <td class="py-2 px-3 text-muted">{{ ticket.address|truncatechars:25 }}</td>
+                                <td class="py-2 px-3">
+                                    <a href="{% url 'tickets:detail_ticket' ticket.pk %}" class="text-decoration-none d-flex align-items-center">
+                                        <span class="badge bg-light text-dark me-3">{{ ticket.management_company.name|default:"-"|first }}</span>
+                                        <span>{{ ticket.title|truncatechars:30 }}</span>
+                                    </a>
+                                </td>
+                                <td class="py-2 px-3">
+                                    <span class="badge py-1 px-2 rounded-pill d-flex align-items-center
+                                        {% if ticket.status == 'new' %}bg-primary-light text-primary
+                                        {% elif ticket.status == 'assigned' %}bg-warning-light text-warning
+                                        {% elif ticket.status == 'in_progress' %}bg-info-light text-info
+                                        {% elif ticket.status == 'completed' %}bg-success-light text-success
+                                        {% else %}bg-secondary-light text-secondary{% endif %}">
+                                        <i class="bi 
+                                            {% if ticket.status == 'new' %}bi-file-earmark-plus
+                                            {% elif ticket.status == 'assigned' %}bi-person-check
+                                            {% elif ticket.status == 'in_progress' %}bi-hourglass-split
+                                            {% elif ticket.status == 'completed' %}bi-check-circle
+                                            {% else %}bi-question-circle{% endif %} me-1"></i>
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="py-2 px-3">
+                                    <span class="badge py-1 px-2 rounded-pill
+                                        {% if ticket.priority == 'high' %}bg-danger-light text-danger
+                                        {% elif ticket.priority == 'medium' %}bg-warning-light text-warning
+                                        {% else %}bg-success-light text-success{% endif %}">
+                                        {{ ticket.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td class="py-2 px-3">
+                                    {% if ticket.executor %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <span class="avatar-title bg-primary-light text-primary rounded-circle">
+                                                    {{ ticket.executor.get_full_name|default:ticket.executor.username|first }}
+                                                </span>
+                                            </div>
+                                            <span>{{ ticket.executor.get_full_name|default:ticket.executor.username|truncatechars:15 }}</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted"><i class="bi bi-person-x me-1"></i>Не назначен</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-2 px-3">
+                                    {% if ticket.master %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <span class="avatar-title bg-primary-light text-primary rounded-circle">
+                                                    {{ ticket.master.get_full_name|default:ticket.master.username|first }}
+                                                </span>
+                                            </div>
+                                            <span>{{ ticket.master.get_full_name|default:ticket.master.username|truncatechars:15 }}</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted"><i class="bi bi-person-x me-1"></i>Не назначен</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-2 px-3 text-muted">
+                                    <small>{{ ticket.created_at|date:"d.m.Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{% if ticket.get_last_sms_status == 'Доставлено' %}success
+                                                            {% elif ticket.get_last_sms_status == 'Не доставлено' %}danger
+                                                            {% elif ticket.get_last_sms_status == 'Отправлено' %}info
+                                                            {% else %}secondary{% endif %}">
+                                        {{ ticket.get_last_sms_status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{% if ticket.get_last_push_status == 'Доставлено' %}success
+                                                            {% elif ticket.get_last_push_status == 'Не доставлено' %}danger
+                                                            {% elif ticket.get_last_push_status == 'Отправлено' %}info
+                                                            {% else %}secondary{% endif %}">
+                                        {{ ticket.get_last_push_status }}
+                                    </span>
+                                </td>
+                                <td class="py-2 px-3 text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'tickets:detail_ticket' ticket.pk %}" class="btn btn-outline-primary" title="Просмотр">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </a>
+                                        <a href="{% url 'tickets:update_ticket' ticket.pk %}" class="btn btn-outline-secondary" title="Редактировать">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                        <a href="{% url 'tickets:delete_ticket' ticket.pk %}" class="btn btn-outline-danger" title="Удалить">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="py-4">
+                                        <i class="bi bi-inbox display-6 text-muted"></i>
+                                        <h4 class="mt-3 mb-2">Заявки не найдены</h4>
+                                        <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
+                                        <a href="{% url 'tickets:list' %}" class="btn btn-primary mt-2">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Сбросить фильтры
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Пагинация -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                <nav class="px-3 py-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            Показано с {{ page_obj.start_index }} по {{ page_obj.end_index }} из {{ page_obj.paginator.count }} заявок
+                        </div>
+                        
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}">
+                                        <i class="bi bi-chevron-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Стили -->
+<style>
+    :root {
+        --primary-light: #e3f2fd;
+        --secondary-light: #f3f5f9;
+        --success-light: #e8f5e9;
+        --danger-light: #ffebee;
+        --warning-light: #fff8e1;
+        --info-light: #e1f5fe;
+    }
+    
+    .card {
+        border-radius: 0.75rem;
+        border: none;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #495057;
+        background-color: #f8f9fa;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td, .table th {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+    }
+    
+    .badge {
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .bg-primary-light { background-color: var(--primary-light); }
+    .bg-secondary-light { background-color: var(--secondary-light); }
+    .bg-success-light { background-color: var(--success-light); }
+    .bg-danger-light { background-color: var(--danger-light); }
+    .bg-warning-light { background-color: var(--warning-light); }
+    .bg-info-light { background-color: var(--info-light); }
+    
+    .avatar-sm {
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .avatar-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .breadcrumb {
+        font-size: 0.75rem;
+        padding: 0;
+        background: transparent;
+    }
+    
+    .page-link {
+        font-size: 0.75rem;
+        min-width: 32px;
+        text-align: center;
+    }
+    
+    .dropdown-menu {
+        font-size: 0.875rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        border: none;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.875rem;
+        border-radius: 0.5rem;
+    }
+    
+    .input-group-text {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-light);
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: var(--secondary-light);
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: var(--danger-light);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+</style>
+
+<!-- Скрипты -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.css">
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Инициализация date range picker
+        $('.date-range-picker').daterangepicker({
+            locale: {
+                format: 'DD.MM.YYYY',
+                applyLabel: 'Применить',
+                cancelLabel: 'Отмена',
+                daysOfWeek: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                monthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                firstDay: 1
+            },
+            opens: 'right',
+            autoUpdateInput: false,
+            drops: 'down'
+        });
+        
+        $('.date-range-picker').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('DD.MM.YYYY') + ' - ' + picker.endDate.format('DD.MM.YYYY'));
+        });
+        
+        $('.date-range-picker').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+        });
+        
+        // Авто-сабмит формы при изменении некоторых фильтров
+        $('select[name="date"], select[name="sort_by"], select[name="specialization"]').change(function() {
+            $('#filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}

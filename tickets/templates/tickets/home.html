@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - CRM система{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Шапка с пользователем -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Главная панель <span class="badge bg-secondary fs-5">{{ user_role }}</span></h1>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle me-2"></i>
+                {{ request.user.username }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end fs-5">
+                <li><a class="dropdown-item py-2" href="#"><i class="bi bi-gear-fill me-2"></i>Настройки профиля</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Выход из системы</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Карточки статистики -->
+    <div class="row mb-4 g-4">
+        <div class="col-lg-4">
+            <div class="card border-start border-primary border-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title text-muted fs-4">Новые заявки</h3>
+                            <h2 class="mb-0 display-5">{{ stats.tickets_new }}</h2>
+                        </div>
+                        <div class="text-primary" style="font-size: 2.5rem;">
+                            <i class="bi bi-file-earmark-plus-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-start border-warning border-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title text-muted fs-4">В работе</h3>
+                            <h2 class="mb-0 display-5">{{ stats.tickets_assigned }}</h2>
+                        </div>
+                        <div class="text-warning" style="font-size: 2.5rem;">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-start border-success border-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title text-muted fs-4">Выполнено</h3>
+                            <h2 class="mb-0 display-5">{{ stats.tickets_completed }}</h2>
+                        </div>
+                        <div class="text-success" style="font-size: 2.5rem;">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Последние заявки -->
+    <div class="card mb-4 border-0 shadow">
+        <div class="card-header bg-light py-3">
+            <h2 class="mb-0 fs-3">
+                <i class="bi bi-list-check me-2"></i> Последние заявки
+            </h2>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_tickets %}
+            <div class="list-group list-group-flush">
+                {% for ticket in recent_tickets %}
+                <a href="{% url 'tickets:detail_ticket' ticket.pk %}" class="list-group-item list-group-item-action py-3 px-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="mb-0 fs-5">{{ ticket.title }}</h4>
+                        <span class="text-muted fs-6">{{ ticket.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <p class="mb-2 fs-6 text-muted">{{ ticket.description|truncatechars:60 }}</p>
+                    <div class="d-flex align-items-center">
+                        <span class="badge fs-6 py-2
+                            {% if ticket.status == 'new' %}bg-primary
+                            {% elif ticket.status == 'assigned' %}bg-warning text-dark
+                            {% elif ticket.status == 'in_progress' %}bg-info text-dark
+                            {% elif ticket.status == 'completed' %}bg-success
+                            {% else %}bg-secondary{% endif %}">
+                            {{ ticket.get_status_display }}
+                        </span>
+                        {% if ticket.executor %}
+                        <span class="ms-3 fs-6 d-flex align-items-center">
+                            <i class="bi bi-person-fill me-1"></i> {{ ticket.executor.user.get_full_name|default:ticket.executor.username }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info m-4 fs-5 d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                <div>Нет заявок для отображения</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+<!-- Активные исполнители -->
+<div class="card border-0 shadow">
+    <div class="card-header bg-light py-3">
+        <h2 class="mb-0 fs-3">
+            <i class="bi bi-people-fill me-2"></i> Активные исполнители
+        </h2>
+    </div>
+    <div class="card-body p-0">
+        {% if active_executors %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle fs-5 mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="py-3 px-4">Исполнитель</th>
+                        <th class="py-3 px-4">Специализация</th>
+                        <th class="py-3 px-4 text-end">Заявки в работе</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for executor in active_executors %}
+                    <tr>
+                        <td class="py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-title bg-primary-light text-primary rounded-circle">
+                                        {{ executor.name|first }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ executor.name }}</div>
+                                    <small class="text-muted">
+                                        {% if executor.active_tickets == 1 %}
+                                        1 активная заявка
+                                        {% elif executor.active_tickets >= 2 and executor.active_tickets <= 4 %}
+                                        {{ executor.active_tickets }} активные заявки
+                                        {% else %}
+                                        {{ executor.active_tickets }} активных заявок
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="badge bg-secondary-light text-dark">
+                                {{ executor.specialization }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-end">
+                            <span class="badge bg-primary rounded-pill fs-6 py-2 px-3">
+                                {{ executor.active_tickets }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info m-4 fs-5 d-flex align-items-center">
+            <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+            <div>Нет активных исполнителей</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<style>
+    .avatar {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.bg-primary-light {
+    background-color: #e3f2fd;
+}
+
+.bg-secondary-light {
+    background-color: #f3f5f9;
+}
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-bottom: 2px solid rgba(0,0,0,0.05);
+    }
+    
+    .list-group-item {
+        border-left: 0;
+        border-right: 0;
+        transition: all 0.2s;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .list-group-item:first-child {
+        border-top: 0;
+    }
+    
+    .badge {
+        font-weight: 500;
+        min-width: 80px;
+        display: inline-flex;
+        justify-content: center;
+    }
+    
+    .dropdown-menu {
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .dropdown-item {
+        border-radius: 8px;
+        margin: 2px 8px;
+        width: auto;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ system_settings.site_name }} - Настройки системы{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-tab-content {
+        display: none;
+    }
+    .settings-tab-content.active {
+        display: block;
+    }
+    .logo-preview {
+        max-height: 100px;
+        margin-top: 10px;
+    }
+    .change-log-item {
+        border-left: 3px solid #6c757d;
+        padding-left: 10px;
+        margin-bottom: 10px;
+    }
+    .change-log-item .field-name {
+        font-weight: bold;
+    }
+    .test-telegram-btn {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Настройки системы</h4>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'general' %}active{% endif %}" 
+                   href="{% url 'settings:system_settings' %}">
+                    <i class="bi bi-gear-fill"></i> Основные
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'security' %}active{% endif %}" 
+                   href="{% url 'settings:security_settings' %}">
+                    <i class="bi bi-shield-lock-fill"></i> Безопасность
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'notifications' %}active{% endif %}" 
+                   href="{% url 'settings:notification_settings' %}">
+                    <i class="bi bi-bell-fill"></i> Уведомления
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'interface' %}active{% endif %}" 
+                   href="{% url 'settings:interface_settings' %}">
+                    <i class="bi bi-display-fill"></i> Интерфейс
+                </a>
+            </li>
+        </ul>
+        
+        <form method="post" enctype="multipart/form-data" id="settingsForm">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Ошибка!</strong> Пожалуйста, исправьте следующие ошибки:
+                    <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <!-- Основные настройки -->
+            <div class="settings-tab-content {% if active_tab == 'general' %}active{% endif %}" id="general-tab">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-info-circle"></i> Основные параметры</h5>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.site_name.label }}</label>
+                            {{ form.site_name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.site_logo.label }}</label>
+                            {{ form.site_logo }}
+                            {% if form.instance.site_logo %}
+                                <div class="mt-2">
+                                    <img src="{{ form.instance.site_logo.url }}" alt="Логотип" class="logo-preview">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-tools"></i> Режим обслуживания</h5>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.maintenance_mode }}
+                            <label class="form-check-label">{{ form.maintenance_mode.label }}</label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.maintenance_message.label }}</label>
+                            {{ form.maintenance_message }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-ticket-detailed"></i> Настройки заявок</h5>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.default_ticket_priority.label }}</label>
+                            {{ form.default_ticket_priority }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.ticket_expiration_days.label }}</label>
+                            {{ form.ticket_expiration_days }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-file-earmark"></i> Настройки файлов</h5>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.allow_file_attachments }}
+                            <label class="form-check-label">{{ form.allow_file_attachments.label }}</label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.max_file_size_mb.label }}</label>
+                            <div class="input-group">
+                                {{ form.max_file_size_mb }}
+                                <span class="input-group-text">МБ</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.allowed_file_types.label }}</label>
+                            {{ form.allowed_file_types }}
+                            <small class="form-text text-muted">Укажите расширения через запятую (например: jpg,png,pdf)</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if active_tab == 'general' %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history"></i> История изменений</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if change_log %}
+                            {% for log in change_log %}
+                                <div class="change-log-item">
+                                    <div>
+                                        <span class="field-name">{{ log.get_changed_field_display }}:</span>
+                                        <span class="text-muted">{{ log.old_value|truncatechars:50 }} → {{ log.new_value|truncatechars:50 }}</span>
+                                    </div>
+                                    <small class="text-muted">
+                                        Изменено {{ log.user.get_full_name }} ({{ log.ip_address }}) в {{ log.changed_at|date:"d.m.Y H:i" }}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">Нет записей в истории изменений</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Настройки безопасности -->
+            <div class="settings-tab-content {% if active_tab == 'security' %}active{% endif %}" id="security-tab">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-door-closed"></i> Настройки входа</h5>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.login_attempts_limit.label }}</label>
+                            {{ form.login_attempts_limit }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.login_block_time_minutes.label }}</label>
+                            <div class="input-group">
+                                {{ form.login_block_time_minutes }}
+                                <span class="input-group-text">минут</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-key"></i> Настройки паролей</h5>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.require_complex_password }}
+                            <label class="form-check-label">{{ form.require_complex_password.label }}</label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.password_min_length.label }}</label>
+                            {{ form.password_min_length }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.password_expiration_days.label }}</label>
+                            <div class="input-group">
+                                {{ form.password_expiration_days }}
+                                <span class="input-group-text">дней</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Настройки уведомлений -->
+            <div class="settings-tab-content {% if active_tab == 'notifications' %}active{% endif %}" id="notifications-tab">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-envelope"></i> Email уведомления</h5>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.email_notifications }}
+                            <label class="form-check-label">{{ form.email_notifications.label }}</label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.email_from.label }}</label>
+                            {{ form.email_from }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-telegram"></i> Telegram уведомления</h5>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.telegram_notifications }}
+                            <label class="form-check-label">{{ form.telegram_notifications.label }}</label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.telegram_bot_token.label }}</label>
+                            {{ form.telegram_bot_token }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.telegram_chat_id.label }}</label>
+                            {{ form.telegram_chat_id }}
+                        </div>
+                        <button type="button" class="btn btn-outline-primary test-telegram-btn" id="testTelegramBtn">
+                            <i class="bi bi-send"></i> Отправить тестовое уведомление
+                        </button>
+                        <div id="telegramTestResult" class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notification-toggle">
+                    <label class="form-check-label" for="notification-toggle">Push-уведомления</label>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h5><i class="bi bi-bell"></i> События для уведомлений</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3 form-check form-switch">
+                                    {{ form.notify_on_ticket_create }}
+                                    <label class="form-check-label">{{ form.notify_on_ticket_create.label }}</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3 form-check form-switch">
+                                    {{ form.notify_on_ticket_update }}
+                                    <label class="form-check-label">{{ form.notify_on_ticket_update.label }}</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3 form-check form-switch">
+                                    {{ form.notify_on_ticket_complete }}
+                                    <label class="form-check-label">{{ form.notify_on_ticket_complete.label }}</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3 form-check form-switch">
+                                    {{ form.notify_on_ticket_assign }}
+                                    <label class="form-check-label">{{ form.notify_on_ticket_assign.label }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Настройки интерфейса -->
+            <div class="settings-tab-content {% if active_tab == 'interface' %}active{% endif %}" id="interface-tab">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-palette"></i> Внешний вид</h5>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.theme_color.label }}</label>
+                            {{ form.theme_color }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.font_size.label }}</label>
+                            <div class="input-group">
+                                {{ form.font_size }}
+                                <span class="input-group-text">px</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-layout-sidebar"></i> Дополнительные настройки</h5>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.compact_mode }}
+                            <label class="form-check-label">{{ form.compact_mode.label }}</label>
+                        </div>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.show_avatars }}
+                            <label class="form-check-label">{{ form.show_avatars.label }}</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h5><i class="bi bi-eye"></i> Предпросмотр темы</h5>
+                        <div class="theme-preview">
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    Заголовок карточки
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Пример заголовка</h5>
+                                    <p class="card-text">Пример текста в карточке с предпросмотром выбранной темы.</p>
+                                    <button class="btn btn-primary">Кнопка</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Сохранить изменения
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Обработка тестового Telegram уведомления
+    $('#testTelegramBtn').click(function() {
+        $('#telegramTestResult').html('<div class="alert alert-info">Отправка тестового уведомления...</div>');
+        
+        $.ajax({
+            url: "{% url 'settings:test_telegram_notification' %}",
+            method: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#telegramTestResult').html('<div class="alert alert-success">' + response.message + '</div>');
+                } else {
+                    $('#telegramTestResult').html('<div class="alert alert-danger">' + response.message + '</div>');
+                }
+            },
+            error: function() {
+                $('#telegramTestResult').html('<div class="alert alert-danger">Ошибка соединения с сервером</div>');
+            }
+        });
+    });
+    
+    // Обновление предпросмотра темы
+    $('select[name="theme_color"]').change(function() {
+        $('.theme-preview .card-header').removeClass('bg-primary bg-success bg-warning bg-dark')
+            .addClass('bg-' + $(this).val());
+    });
+    
+    // Переключение вкладок без перезагрузки страницы
+    $('.nav-tabs a').click(function(e) {
+        e.preventDefault();
+        $('.nav-tabs a').removeClass('active');
+        $(this).addClass('active');
+        
+        $('.settings-tab-content').removeClass('active');
+        $('#' + $(this).attr('href').replace('#', '') + '-tab').addClass('active');
+    });
+});
+</script>
+{% endblock %}
